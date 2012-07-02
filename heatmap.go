@@ -10,13 +10,13 @@ import (
 	"os"
 )
 
-type Commit struct {
+type Event struct {
 	Payload Payload `json:"payload"`
-	Event   string  `json:"type"`
+	Type  string  `json:"type"`
 }
 
 type Payload struct {
-	Shas []map[string]interface{} `json:"shas"`
+    Shas []interface{} `json:"shas"`
 }
 
 func main() {
@@ -38,15 +38,24 @@ func main() {
 		return
 	}
 	decoder := json.NewDecoder(reader)
-	for {
-		var commit Commit
-		if err := decoder.Decode(&commit); err == io.EOF {
+    var event Event
+	for i := 0; i < 10; i++ {
+		if err := decoder.Decode(&event); err == io.EOF {
 			break
 		} else if err != nil {
 			log.Fatal("Couldn't decode JSON:", err)
 		}
-		if commit.Event == "PushEvent" {
-			fmt.Println(commit.Payload.Shas)
-		}
+
+		if event.Type == "PushEvent" {
+            for _, commit := range event.Payload.Shas {
+                switch commitData := commit.(type) {
+                    case []interface{}:
+                        fmt.Println("Commit Message:", commitData[2])
+                    default:
+                        log.Fatal("Could not convert Shas to something usable")
+                }
+            }
+        }
+
 	}
 }
