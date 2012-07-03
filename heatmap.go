@@ -3,7 +3,7 @@ package main
 import (
 	"compress/gzip"
 	"encoding/json"
-    "errors"
+	"errors"
 	"fmt"
 	"io"
 	"log"
