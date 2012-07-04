@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+    "regexp"
 	"strings"
 )
 
@@ -37,8 +38,16 @@ type GeocodeResult struct {
 	}
 }
 
-const GITHUB string = "https://api.github.com"
-const GEOCODER string = "http://maps.googleapis.com/maps/api/geocode/json?address="
+var (
+    Commits map[string]int // map of "lat,lng" hashed : count
+    ProfanityPattern = regexp.MustCompile("\\w*(shit|piss|fuck)+\\w*|cunt|wtf|dafuq") // Used some of the words used here: http://goo.gl/Mvisn
+    TotalCommits int
+)
+
+const (
+    GITHUB string = "https://api.github.com"
+    GEOCODER string = "http://maps.googleapis.com/maps/api/geocode/json?address="
+)
 
 func (e *Event) GetCommitterLocation() (string, error) {
 	param := fmt.Sprint("/users/", e.Committer)
@@ -103,6 +112,7 @@ func (e *Event) GetLatLng() (float32, float32, error) {
 }*/
 
 func main() {
+    Commits = make(map[string]int)
 	file, err := os.Open("2012-03-11-15.json.gz")
 	if err != nil {
 		log.Fatal(err)
@@ -113,24 +123,38 @@ func main() {
 	}
 	decoder := json.NewDecoder(reader)
 	var event Event
-	for i := 0; i < 10; i++ {
+	for {
 		if err := decoder.Decode(&event); err == io.EOF {
 			break
 		} else if err != nil {
-			log.Fatal("Couldn't decode JSON:", err)
+			log.Print("Couldn't decode JSON:", err)
 		}
 
 		if event.Type == "PushEvent" {
 			for _, commit := range event.Payload.Shas {
 				switch commitData := commit.(type) {
 				case []interface{}:
-					lat, lng, _ := event.GetLatLng()
-					fmt.Println(commitData[2], "by", event.Committer, "(Lat:", lat, "Lng", lng, ")")
+                    message := commitData[2]
+                    switch m := message.(type) {
+                        case string:
+                           if ProfanityPattern.MatchString(m) {
+                               lat, lng, _ := event.GetLatLng()
+                                if lat != 0 && lng != 0 {
+                                    key := fmt.Sprintf("%f,%f", lat, lng)
+                                    count, _ := Commits[key]
+                                    Commits[key] = (count + 1)
+                                    fmt.Println(m, "by", event.Committer, "(Lat:", lat, "Lng", lng, ")")
+                                }
+                           }
+                        default:
+                            log.Fatal("Commit message was not a string")
+                    }
 				default:
 					log.Fatal("Could not convert Shas to something usable")
 				}
 			}
 		}
-
+        TotalCommits += 1
 	}
+    fmt.Println("Commits:", Commits, "Total Commits:", TotalCommits)
 }
