@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-    "regexp"
+	"regexp"
 	"strings"
 )
 
@@ -39,14 +39,14 @@ type GeocodeResult struct {
 }
 
 var (
-    Commits map[string]int // map of "lat,lng" hashed : count
-    ProfanityPattern = regexp.MustCompile("\\w*(shit|piss|fuck)+\\w*|cunt|wtf|dafuq") // Used some of the words used here: http://goo.gl/Mvisn
-    TotalCommits int
+	Commits          map[string]int                                                   // map of "lat,lng" hashed : count
+	ProfanityPattern = regexp.MustCompile("\\w*(shit|piss|fuck)+\\w*|cunt|wtf|dafuq") // Used some of the words used here: http://goo.gl/Mvisn
+	TotalCommits     int
 )
 
 const (
-    GITHUB string = "https://api.github.com"
-    GEOCODER string = "http://maps.googleapis.com/maps/api/geocode/json?address="
+	GITHUB   string = "https://api.github.com"
+	GEOCODER string = "http://maps.googleapis.com/maps/api/geocode/json?address="
 )
 
 func (e *Event) GetCommitterLocation() (string, error) {
@@ -112,7 +112,7 @@ func (e *Event) GetLatLng() (float32, float32, error) {
 }*/
 
 func main() {
-    Commits = make(map[string]int)
+	Commits = make(map[string]int)
 	file, err := os.Open("2012-03-11-15.json.gz")
 	if err != nil {
 		log.Fatal(err)
@@ -134,27 +134,27 @@ func main() {
 			for _, commit := range event.Payload.Shas {
 				switch commitData := commit.(type) {
 				case []interface{}:
-                    message := commitData[2]
-                    switch m := message.(type) {
-                        case string:
-                           if ProfanityPattern.MatchString(m) {
-                               lat, lng, _ := event.GetLatLng()
-                                if lat != 0 && lng != 0 {
-                                    key := fmt.Sprintf("%f,%f", lat, lng)
-                                    count, _ := Commits[key]
-                                    Commits[key] = (count + 1)
-                                    fmt.Println(m, "by", event.Committer, "(Lat:", lat, "Lng", lng, ")")
-                                }
-                           }
-                        default:
-                            log.Fatal("Commit message was not a string")
-                    }
+					message := commitData[2]
+					switch m := message.(type) {
+					case string:
+						if ProfanityPattern.MatchString(m) {
+							lat, lng, _ := event.GetLatLng()
+							if lat != 0 && lng != 0 {
+								key := fmt.Sprintf("%f,%f", lat, lng)
+								count, _ := Commits[key]
+								Commits[key] = (count + 1)
+								fmt.Println(m, "by", event.Committer, "(Lat:", lat, "Lng", lng, ")")
+							}
+						}
+					default:
+						log.Fatal("Commit message was not a string")
+					}
 				default:
 					log.Fatal("Could not convert Shas to something usable")
 				}
 			}
 		}
-        TotalCommits += 1
+		TotalCommits += 1
 	}
-    fmt.Println("Commits:", Commits, "Total Commits:", TotalCommits)
+	fmt.Println("Commits:", Commits, "Total Commits:", TotalCommits)
 }
