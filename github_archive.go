@@ -43,7 +43,9 @@ func processJSON(reader io.Reader) []Event {
 		} else if err != nil {
 			log.Printf("Could not decode event: %v", err)
 		} else {
-			events = append(events, event)
+			if event.Type == "PushEvent" {
+				events = append(events, event)
+			}
 		}
 	}
 	log.Println("There are", len(events), "events.")
