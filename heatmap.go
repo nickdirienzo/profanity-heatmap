@@ -1,12 +1,15 @@
 package main
 
 import (
+	"flag"
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo"
 	"log"
 	"time"
 )
+
+var apiKey = flag.String("key", "", "Google Geocoding API Key")
 
 const (
 	dbName     string = "heatmap"
@@ -24,6 +27,7 @@ func DB(session *mgo.Session) martini.Handler {
 }
 
 func main() {
+	flag.Parse()
 	session, err := mgo.Dial("mongodb://localhost")
 	if err != nil {
 		panic(err)
@@ -39,6 +43,7 @@ func main() {
 }
 
 func getDailyActivity(s *mgo.Session) {
+	geocoder := Geocoder{*apiKey}
 	for {
 		session := s.Clone()
 		now := time.Now()

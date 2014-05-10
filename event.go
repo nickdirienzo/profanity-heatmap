@@ -6,11 +6,13 @@ type Payload struct {
 }
 
 type ActorAttributes struct {
-	Login      string `json:"login" bson:"login"`
-	Type       string `json:"type" bson:"type"`
-	GravatarId string `json:"gravatar_id" bson:"gravatar_id"`
-	Name       string `json:"name" bson:"name"`
-	Locatoin   string `json:"location" bson:"location"`
+	Login      string  `json:"login" bson:"login"`
+	Type       string  `json:"type" bson:"type"`
+	GravatarId string  `json:"gravatar_id" bson:"gravatar_id"`
+	Name       string  `json:"name" bson:"name"`
+	Locatoin   string  `json:"location" bson:"location"`
+	Lat        float64 `bson:"lat"`
+	Lng        float64 `bson:"lng"`
 }
 
 type Event struct {
