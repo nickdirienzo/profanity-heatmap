@@ -71,11 +71,11 @@ func decompress(compressed io.Reader) (io.Reader, error) {
 	return gzip.NewReader(compressed)
 }
 
-func GetActivityForDate(date time.Time) error {
+func GetActivityForDate(date time.Time) ([]Event, error) {
 	query_date := formatDateForQuery(date)
 	fmt.Println(query_date)
 	query_url := fmt.Sprintf(base_url, query_date)
 	fmt.Println(query_url)
-	_, err := getActivity(query_url)
-	return err
+	events, err := getActivity(query_url)
+	return events, err
 }
