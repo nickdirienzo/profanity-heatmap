@@ -5,7 +5,6 @@ import (
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo"
-	"labix.org/v2/mgo/bson"
 	"log"
 	"math/rand"
 	"time"
@@ -23,7 +22,7 @@ type FrontendEvent struct {
 	Lat      float64
 	Lng      float64
 	Location string
-	Id       bson.ObjectId
+	Id       string
 	Count    int
 }
 
@@ -61,7 +60,7 @@ func main() {
 			for i := range mappedEvents {
 				frontendEvents = append(frontendEvents,
 					FrontendEvent{mappedEvents[i].Lat, mappedEvents[i].Lng,
-						mappedEvents[i].ActorAttributes.Location, mappedEvents[i].Id,
+						mappedEvents[i].ActorAttributes.Location, mappedEvents[i].Id.Hex(),
 						len(mappedEvents)})
 			}
 		}
