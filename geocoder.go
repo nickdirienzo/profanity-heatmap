@@ -63,7 +63,7 @@ func (g *Geocoder) GetLatLng(address string) (float64, float64, error) {
 			log.Printf("Could not create GeocodingResults: %v", err)
 			return -1, -1, err
 		}
-		if len(results) > 0 {
+		if len(results.Results) > 0 {
 			return results.Results[0].Geometry.Location.Lat, results.Results[0].Geometry.Location.Lng, nil
 		}
 		return -1, -1, errors.New(NO_RESULTS)
