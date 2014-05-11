@@ -2,6 +2,9 @@
     <head>
     </head>
     <body>
-    	<p>Woo</p>
+    	<p>Events</p>
+    	{{range .}}
+    	<p>{{ .ActorAttributes.Location }} -> ({{ .Lat }}, {{ .Lng }})
+    	{{ end }}
     </body>
 </html>

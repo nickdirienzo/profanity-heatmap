@@ -6,7 +6,6 @@ import (
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo"
 	"log"
-	"math"
 	"math/rand"
 	"time"
 )
@@ -38,10 +37,12 @@ func main() {
 	m := martini.Classic()
 	m.Use(render.Renderer())
 	m.Use(DB(session))
-	m.Get("/", func(r render.Render) {
-		r.HTML(200, "index", nil)
+	m.Get("/", func(r render.Render, db *mgo.Database) {
+		var events []Event
+		db.C(eventsName).Find(nil).All(&events)
+		r.HTML(200, "index", events)
 	})
-	go getDailyActivity(session)
+	//go getDailyActivity(session)
 	m.Run()
 }
 
@@ -61,20 +62,27 @@ func getDailyActivity(s *mgo.Session) {
 		if err != nil {
 			log.Printf("Could not get activity for date: %v", err)
 		}
-		r := int(math.Min(float64(len(events)), float64(eventsPerHour)))
-		p := rand.Perm(r)
+		p := rand.Perm(len(events))
 		var event Event
-		for i := 0; i < r; i++ {
+		var eventsProcessed int = 0
+		for i := 0; i < len(events); i++ {
 			event = events[p[i]]
-			lat, lng, err := g.GetLatLng(event.ActorAttributes.Location)
-			if err != nil && err.Error() != NO_ADDRESS {
-				log.Printf("GetLatLng Error: %v", err)
-			}
-			event.Lat = lat
-			event.Lng = lng
-			err = s.DB(dbName).C(eventsName).Insert(event)
-			if err != nil {
-				log.Printf("Insert error: %v", err)
+			if len(event.ActorAttributes.Location) > 0 {
+				lat, lng, err := g.GetLatLng(event.ActorAttributes.Location)
+				if err != nil && err.Error() != NO_ADDRESS {
+					log.Printf("GetLatLng Error: %v", err)
+				}
+				event.Lat = lat
+				event.Lng = lng
+				err = s.DB(dbName).C(eventsName).Insert(event)
+				if err != nil {
+					log.Printf("Insert error: %v", err)
+					eventsProcessed--
+				}
+				eventsProcessed++
+				if eventsProcessed == eventsPerHour {
+					break
+				}
 			}
 		}
 		d, err = time.ParseDuration("1h")
