@@ -43,7 +43,7 @@ func main() {
 		db.C(eventsName).Find(nil).All(&events)
 		r.HTML(200, "index", events)
 	})
-	go getDailyActivity(session)
+	//go getDailyActivity(session)
 	m.Run()
 }
 
@@ -74,7 +74,7 @@ func getDailyActivity(s *mgo.Session) {
 				}
 				event.Lat = lat
 				event.Lng = lng
-				//err = s.DB(dbName).C(eventsName).Insert(event)
+				err = s.DB(dbName).C(eventsName).Insert(event)
 				if err != nil {
 					log.Printf("Insert error: %v", err)
 				}
