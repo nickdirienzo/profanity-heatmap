@@ -11,6 +11,7 @@ import (
 
 const google_base_url string = "https://maps.googleapis.com/maps/api/geocode/json"
 const NO_ADDRESS string = "No address provided"
+const NO_RESULTS string = "No results returned"
 
 type Geocoder struct {
 	apiKey string
@@ -42,7 +43,7 @@ func (g *Geocoder) GetLatLng(address string) (float64, float64, error) {
 		values := req.Query()
 		values.Add("address", address)
 		values.Add("sensor", "false")
-		values.Add("key", g.apiKey)
+		//values.Add("key", g.apiKey)
 		req.RawQuery = values.Encode()
 		log.Println("Making request for: " + req.String())
 		resp, err := http.Get(req.String())
@@ -62,7 +63,10 @@ func (g *Geocoder) GetLatLng(address string) (float64, float64, error) {
 			log.Printf("Could not create GeocodingResults: %v", err)
 			return -1, -1, err
 		}
-		return 0, 0, nil
+		if len(results) > 0 {
+			return results.Results[0].Geometry.Location.Lat, results.Results[0].Geometry.Location.Lng, nil
+		}
+		return -1, -1, errors.New(NO_RESULTS)
 	}
 	return -1, -1, errors.New(NO_ADDRESS)
 }
