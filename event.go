@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"labix.org/v2/mgo/bson"
+)
+
 type Payload struct {
 	// ["hash", "email", "message", "name", distinct_bool]
 	Shas []interface{} `json:"shas"`
@@ -14,10 +19,15 @@ type ActorAttributes struct {
 }
 
 type Event struct {
+	Id              bson.ObjectId   `bson:"_id"`
 	Payload         Payload         `json:"payload" bson:"-"`
 	Actor           string          `json:"actor" bson:"actor"`
 	ActorAttributes ActorAttributes `json:"actor_attributes" bson:"actor_attributes,inline"`
 	Type            string          `json:"type" bson:"event_type"`
 	Lat             float64         `bson:"lat"`
 	Lng             float64         `bson:"lng"`
+}
+
+func (e *Event) serialize() string {
+	return fmt.Sprintf("%v-%v", e.Lat, e.Lng)
 }

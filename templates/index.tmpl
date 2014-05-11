@@ -1,10 +1,42 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
+    	<title>GitHub Profanity Heatmap</title>
+    	<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+    	<script type="text/javascript" src="/js/heatmap.js"></script>
+    	<script type="text/javascript" src="/js/heatmap-gmaps.js"></script>
+    	<script type="text/javascript">
+    		window.onload = function() {
+    			var myLatLng = new google.maps.LatLng(40.7127, 74.0059);
+    			var options = {
+    				zoom: 1,
+    				center: myLatLng,
+    				mapTypeId: google.maps.mapTypeId.ROADMAP,
+    				disableDefaultUI: false,
+    				scrollwheel: true,
+    				draggable: true,
+    				navigationControl: true,
+    				mapTypeControl: false,
+    				scaleControl: true,
+    				disableDoubleClickZoom: false
+    			};
+    			var heatmap = new HeatmapOverlay(map, {
+    				"radius": 20,
+    				"visible": true,
+    				"opacity": 60
+    			});
+    			var events = { data: [
+    				{{ range . }}
+    				{lat: {{ .Lat }}, lng: {{ .Lng }}, count: {{ .Count }}},
+    				{{ end }}
+    			]};
+    		};
+    	</script>
     </head>
     <body>
     	<p>Events</p>
     	{{range .}}
-    	<p>{{ .ActorAttributes.Location }} -> ({{ .Lat }}, {{ .Lng }})
+    	<p><div id="{{ .Id }}">{{ .Location }} -> ({{ .Lat }}, {{ .Lng }}) : {{ .Count }}</div></p>
     	{{ end }}
     </body>
 </html>

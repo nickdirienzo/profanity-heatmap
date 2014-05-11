@@ -5,6 +5,7 @@ import (
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo"
+	"labix.org/v2/mgo/bson"
 	"log"
 	"math/rand"
 	"time"
@@ -17,6 +18,14 @@ const (
 	eventsName    string = "events"
 	eventsPerHour int    = 2500 / 24
 )
+
+type FrontendEvent struct {
+	Lat      float64
+	Lng      float64
+	Location string
+	Id       bson.ObjectId
+	Count    int
+}
 
 // Adapted from: http://blog.gopheracademy.com/day-11-martini
 func DB(session *mgo.Session) martini.Handler {
@@ -37,10 +46,26 @@ func main() {
 	m := martini.Classic()
 	m.Use(render.Renderer())
 	m.Use(DB(session))
+	m.Use(martini.Static("static"))
 	m.Get("/", func(r render.Render, db *mgo.Database) {
 		var events []Event
+		eventsMap := make(map[string][]Event)
 		db.C(eventsName).Find(nil).All(&events)
-		r.HTML(200, "index", events)
+		for i := range events {
+			s := events[i].serialize()
+			eventsMap[s] = append(eventsMap[s], events[i])
+		}
+		var frontendEvents []FrontendEvent
+		for key := range eventsMap {
+			mappedEvents := eventsMap[key]
+			for i := range mappedEvents {
+				frontendEvents = append(frontendEvents,
+					FrontendEvent{mappedEvents[i].Lat, mappedEvents[i].Lng,
+						mappedEvents[i].ActorAttributes.Location, mappedEvents[i].Id,
+						len(mappedEvents)})
+			}
+		}
+		r.HTML(200, "index", frontendEvents)
 	})
 	//go getDailyActivity(session)
 	m.Run()
