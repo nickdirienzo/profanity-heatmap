@@ -7,11 +7,15 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 )
 
 // To retrieve activity for April 11, 2012 at 3PM PST, %s would be substituted with 2012-04-11-15
 const github_base_url string = "http://data.githubarchive.org/%s.json.gz"
+
+// This regexp can be better
+var profanityPattern *regexp.Regexp = regexp.MustCompile("([^\\w]ass[^\\w]|[^\\w]asshole[^\\w]|[^\\w]dumbass[^\\w]|[^\\w]hell[^\\w]|fuck|shit|damn|bitch|bastard)+")
 
 func formatDateForQuery(date time.Time) string {
 	var m, d string
@@ -44,7 +48,20 @@ func processJSON(reader io.Reader) []Event {
 			log.Printf("Could not decode event: %v", err)
 		} else {
 			if event.Type == "PushEvent" {
-				events = append(events, event)
+				// This is really annoying
+				for _, commit := range event.Payload.Commits {
+					switch commitData := commit.(type) {
+					case []interface{}:
+						message := commitData[2]
+						switch messageData := message.(type) {
+						case string:
+							if profanityPattern.MatchString(messageData) {
+								log.Println("Found a match: " + messageData)
+								events = append(events, event)
+							}
+						}
+					}
+				}
 			}
 		}
 	}

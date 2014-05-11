@@ -7,7 +7,7 @@ import (
 
 type Payload struct {
 	// ["hash", "email", "message", "name", distinct_bool]
-	Shas []interface{} `json:"shas"`
+	Commits []interface{} `json:"shas"`
 }
 
 type ActorAttributes struct {

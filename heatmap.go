@@ -18,14 +18,6 @@ const (
 	eventsPerHour int    = 2500 / 24
 )
 
-type FrontendEvent struct {
-	Lat      float64
-	Lng      float64
-	Location string
-	Id       string
-	Count    int
-}
-
 // Adapted from: http://blog.gopheracademy.com/day-11-martini
 func DB(session *mgo.Session) martini.Handler {
 	return func(c martini.Context) {
@@ -48,25 +40,10 @@ func main() {
 	m.Use(martini.Static("static"))
 	m.Get("/", func(r render.Render, db *mgo.Database) {
 		var events []Event
-		eventsMap := make(map[string][]Event)
 		db.C(eventsName).Find(nil).All(&events)
-		for i := range events {
-			s := events[i].serialize()
-			eventsMap[s] = append(eventsMap[s], events[i])
-		}
-		var frontendEvents []FrontendEvent
-		for key := range eventsMap {
-			mappedEvents := eventsMap[key]
-			for i := range mappedEvents {
-				frontendEvents = append(frontendEvents,
-					FrontendEvent{mappedEvents[i].Lat, mappedEvents[i].Lng,
-						mappedEvents[i].ActorAttributes.Location, mappedEvents[i].Id.Hex(),
-						len(mappedEvents)})
-			}
-		}
-		r.HTML(200, "index", frontendEvents)
+		r.HTML(200, "index", events)
 	})
-	//go getDailyActivity(session)
+	go getDailyActivity(session)
 	m.Run()
 }
 
@@ -98,15 +75,12 @@ func getDailyActivity(s *mgo.Session) {
 				}
 				event.Lat = lat
 				event.Lng = lng
-				err = s.DB(dbName).C(eventsName).Insert(event)
+				//err = s.DB(dbName).C(eventsName).Insert(event)
 				if err != nil {
 					log.Printf("Insert error: %v", err)
 					eventsProcessed--
 				}
 				eventsProcessed++
-				if eventsProcessed == eventsPerHour {
-					break
-				}
 			}
 		}
 		d, err = time.ParseDuration("1h")
