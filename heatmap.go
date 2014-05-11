@@ -65,7 +65,6 @@ func getDailyActivity(s *mgo.Session) {
 		}
 		p := rand.Perm(len(events))
 		var event Event
-		var eventsProcessed int = 0
 		for i := 0; i < len(events); i++ {
 			event = events[p[i]]
 			if len(event.ActorAttributes.Location) > 0 {
@@ -78,9 +77,7 @@ func getDailyActivity(s *mgo.Session) {
 				//err = s.DB(dbName).C(eventsName).Insert(event)
 				if err != nil {
 					log.Printf("Insert error: %v", err)
-					eventsProcessed--
 				}
-				eventsProcessed++
 			}
 		}
 		d, err = time.ParseDuration("1h")
