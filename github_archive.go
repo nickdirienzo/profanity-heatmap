@@ -11,7 +11,7 @@ import (
 )
 
 // To retrieve activity for April 11, 2012 at 3PM PST, %s would be substituted with 2012-04-11-15
-const base_url string = "http://data.githubarchive.org/%s.json.gz"
+const github_base_url string = "http://data.githubarchive.org/%s.json.gz"
 
 func formatDateForQuery(date time.Time) string {
 	var m, d string
@@ -74,7 +74,7 @@ func decompress(compressed io.Reader) (io.Reader, error) {
 func GetActivityForDate(date time.Time) ([]Event, error) {
 	query_date := formatDateForQuery(date)
 	fmt.Println(query_date)
-	query_url := fmt.Sprintf(base_url, query_date)
+	query_url := fmt.Sprintf(github_base_url, query_date)
 	fmt.Println(query_url)
 	events, err := getActivity(query_url)
 	return events, err

@@ -6,14 +6,17 @@ import (
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo"
 	"log"
+	"math"
+	"math/rand"
 	"time"
 )
 
 var apiKey = flag.String("key", "", "Google Geocoding API Key")
 
 const (
-	dbName     string = "heatmap"
-	eventsName string = "events"
+	dbName        string = "heatmap"
+	eventsName    string = "events"
+	eventsPerHour int    = 2500 / 24
 )
 
 // Adapted from: http://blog.gopheracademy.com/day-11-martini
@@ -43,7 +46,7 @@ func main() {
 }
 
 func getDailyActivity(s *mgo.Session) {
-	geocoder := Geocoder{*apiKey}
+	g := Geocoder{*apiKey}
 	for {
 		session := s.Clone()
 		now := time.Now()
@@ -55,9 +58,21 @@ func getDailyActivity(s *mgo.Session) {
 			log.Printf("Could not parse hour long duration: %v", err)
 		}
 		events, err := GetActivityForDate(now.Add(d))
-		for i := range events {
-			log.Printf("Inserting event: %v", i)
-			err = s.DB(dbName).C(eventsName).Insert(events[i])
+		if err != nil {
+			log.Printf("Could not get activity for date: %v", err)
+		}
+		r := int(math.Min(float64(len(events)), float64(eventsPerHour)))
+		p := rand.Perm(r)
+		var event Event
+		for i := 0; i < r; i++ {
+			event = events[p[i]]
+			lat, lng, err := g.GetLatLng(event.ActorAttributes.Location)
+			if err != nil && err.Error() != NO_ADDRESS {
+				log.Printf("GetLatLng Error: %v", err)
+			}
+			event.Lat = lat
+			event.Lng = lng
+			err = s.DB(dbName).C(eventsName).Insert(event)
 			if err != nil {
 				log.Printf("Insert error: %v", err)
 			}
